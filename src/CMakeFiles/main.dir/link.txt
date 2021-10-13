@@ -1,1 +1,0 @@
-/usr/bin/c++   -pthread  -march=native -O3 -maes -pg -ggdb -std=c++11   CMakeFiles/main.dir/main.cpp.o  -o main -rdynamic -lgmp -lgmpxx -lzm 

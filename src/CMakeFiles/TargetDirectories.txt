@@ -1,3 +1,0 @@
-/mnt/d/phd_second_year/research/multiparty_psi/mpsi_cpp/src/CMakeFiles/rebuild_cache.dir
-/mnt/d/phd_second_year/research/multiparty_psi/mpsi_cpp/src/CMakeFiles/edit_cache.dir
-/mnt/d/phd_second_year/research/multiparty_psi/mpsi_cpp/src/CMakeFiles/mpsi.dir

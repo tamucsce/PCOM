@@ -1,1 +1,0 @@
-/usr/bin/c++ -DBN_SUPPORT_SNARK -rdynamic CMakeFiles/mpsi.dir/mpsi.cpp.o -o mpsi   -L/mnt/d/phd_second_year/research/multiparty_psi/mpsi_cpp/src/../depends/ate-pairing/lib  -Wl,-rpath,/mnt/d/phd_second_year/research/multiparty_psi/mpsi_cpp/src/../depends/ate-pairing/lib -lgmp -lgmpxx -lzm 
