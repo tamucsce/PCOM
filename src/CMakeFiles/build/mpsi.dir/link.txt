@@ -1,0 +1,1 @@
+/usr/bin/c++      CMakeFiles/build/mpsi.dir/main.o  -o build/mpsi -rdynamic 
