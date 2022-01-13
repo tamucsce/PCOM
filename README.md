@@ -20,9 +20,9 @@ To run the PSI protocal between 2 parties:
 
     run:
 
-		terminal1: ./src/mpsi -s -f file1
+		terminal 1: ./src/mpsi -s -f file1
 
-		terminal2: ./src/mpsi -c -f file2
+		terminal 2: ./src/mpsi -c -f file2
 
 
 
