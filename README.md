@@ -1,8 +1,8 @@
 Here is the ami image for our AWS instance:
 
 N.Virginia
-
-ami-0fa60e2ac8161c6b0
+ 
+	ami-0fa60e2ac8161c6b0
 
 It is already set up. 
 
