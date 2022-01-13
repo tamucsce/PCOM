@@ -26,8 +26,7 @@ To run the PSI protocal between 2 parties:
 
 *NOTE: -s denotes the P1 party, -c denotes other parties. Each party's set is in each corresponding file. To generate the file, there is a code called "test_file.cpp" that generates it (Or you can import them yourself)
 	If you want to test it on 3 or more parties, just open more terminals.
-
-	*Due to limited time, this code is implemented to only support polynomials that has size exactly to the power of 2. So for now only play with it with input files with 1 less the power of 2 amount of numbers (EX: 7, 63, 1023).
+	Due to limited time, this code is implemented to only support polynomials that has size exactly to the power of 2. So for now only play with it with input files with 1 less the power of 2 amount of numbers (EX: 7, 63, 1023).
 	Sorry for inconvenience.
 	
 
