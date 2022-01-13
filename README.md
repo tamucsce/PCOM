@@ -12,17 +12,17 @@ To run the PSI protocal between 2 parties:
 
     both:
 
-	cd /MultipartyPSI/build 
+		cd /MultipartyPSI/build 
 
     compile:
 
-	make
+		make
 
     run:
 
-	terminal1: ./src/mpsi -s -f file1
+		terminal1: ./src/mpsi -s -f file1
 
-	terminal2: ./src/mpsi -c -f file2
+		terminal2: ./src/mpsi -c -f file2
 
 
 
