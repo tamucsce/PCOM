@@ -1,4 +1,5 @@
 Here is the ami image for our AWS instance:
+
 N.Virginia
 
 ami-0fa60e2ac8161c6b0
@@ -10,12 +11,15 @@ To run the PSI protocal between 2 parties:
 1) open 2 terminals
 
     both:
+
 	cd /MultipartyPSI/build 
 
     compile:
+
 	make
 
     run:
+
 	terminal1: ./src/mpsi -s -f file1
 
 	terminal2: ./src/mpsi -c -f file2
