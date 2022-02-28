@@ -3,13 +3,18 @@ Installation
 GMP:
 
 
-Install gmp-6.2.1, follow official instruction or:
+Install gmp-6.2.1, download the official zip and:
 
   cd gmp
+
   ./configure
+
   make
+
   make check
+
   make install
+
 
 Boost:
 
