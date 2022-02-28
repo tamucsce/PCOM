@@ -12,11 +12,13 @@ Install gmp-6.2.1 follow official instruction or:
 
 Boost:
 
-
 Install boost_1_76_0
  
 
 Build Instruction
+
+
+
 
 
 To run the PSI protocal between 2 parties:
