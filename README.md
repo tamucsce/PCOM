@@ -1,6 +1,7 @@
 Installation
 
 GMP
+
 Install gmp-6.2.1 follow official instruction or:
   cd gmp
   ./configure
@@ -9,10 +10,12 @@ Install gmp-6.2.1 follow official instruction or:
   make install
 
 Boost
+
 Install boost_1_76_0
  
 
 Build Instruction
+
 To run the PSI protocal between 2 parties:
 
 open 2 terminals
