@@ -1,6 +1,6 @@
 Installation
 
-GMP
+GMP:
 
 
 Install gmp-6.2.1 follow official instruction or:
@@ -10,7 +10,7 @@ Install gmp-6.2.1 follow official instruction or:
   make check
   make install
 
-Boost
+Boost:
 
 
 Install boost_1_76_0
