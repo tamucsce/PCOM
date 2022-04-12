@@ -1,0 +1,10 @@
+/home/ubuntu/MultipartyPSI/build/CMakeFiles/rebuild_cache.dir
+/home/ubuntu/MultipartyPSI/build/CMakeFiles/edit_cache.dir
+/home/ubuntu/MultipartyPSI/build/CMakeFiles/zm.dir
+/home/ubuntu/MultipartyPSI/build/CMakeFiles/demo_add.dir
+/home/ubuntu/MultipartyPSI/build/CMAKE_CURRENT_BINARY_DIR/CMakeFiles/rebuild_cache.dir
+/home/ubuntu/MultipartyPSI/build/CMAKE_CURRENT_BINARY_DIR/CMakeFiles/edit_cache.dir
+/home/ubuntu/MultipartyPSI/build/CMAKE_CURRENT_BINARY_DIR/CMakeFiles/portable_binary_archive.dir
+/home/ubuntu/MultipartyPSI/build/src/CMakeFiles/rebuild_cache.dir
+/home/ubuntu/MultipartyPSI/build/src/CMakeFiles/edit_cache.dir
+/home/ubuntu/MultipartyPSI/build/src/CMakeFiles/mpsi.dir
