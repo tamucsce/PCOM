@@ -1,2 +1,0 @@
-/usr/bin/ar qc libportable_binary_archive.a  CMakeFiles/portable_binary_archive.dir/include/ligero/util/boost/portable_binary_iarchive.cpp.o CMakeFiles/portable_binary_archive.dir/include/ligero/util/boost/portable_binary_oarchive.cpp.o
-/usr/bin/ranlib libportable_binary_archive.a

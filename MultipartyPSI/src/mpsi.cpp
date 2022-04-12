@@ -163,11 +163,11 @@ ciphertext encrypt(const pubkey& key, const Ec1& g, mpz_class message) {
     gmp_randclass rand(gmp_randinit_default);
     rand.seed(time(NULL));
 
-    // mpz_class r = rand.get_z_bits(400) % mpr;
-    // mpz_class s = rand.get_z_bits(400) % mpr;
+    mpz_class r = rand.get_z_bits(400) % mpr;
+    mpz_class s = rand.get_z_bits(400) % mpr;
     
-    mpz_class r(0);
-    mpz_class s(0);
+    // mpz_class r(0);
+    // mpz_class s(0);
     mpz_class rs = r + s;
 
     ciphertext cipher{
@@ -3294,12 +3294,9 @@ void run_server(std::chrono::seconds accept_time, const std::vector<mpz_class>& 
     }
     Ec1 d = innerEc1Mpz(poly,t_lambda,poly_size);
     
-    // check if these 2 decrypt to 0
-    cout<<lambda_eval[0]<<endl;
-    cout<<lambda_eval[1]<<endl;
-    cout<<lambda_eval[2]<<endl;
-
-    cout<<eval_added<<endl;
+   
+    // cout<<lambda_eval[2]<<endl;
+    // cout<<eval_added<<endl;
    
     //exit(1);
     //========evaluate at its own polynomial==========
@@ -3932,7 +3929,7 @@ void run_client(const std::vector<mpz_class>& input, const std::string bind_addr
     Ec1 eval = innerEc1Mpz(poly,t_lambda,poly_size);
     // cout<<"hi"<<endl;
     sock.send(eval);
-    cout<<eval<<endl;
+    //cout<<eval<<endl;
     //========================old things=====================================
 
     auto t3 = make_timer("Evaluate at lambda");

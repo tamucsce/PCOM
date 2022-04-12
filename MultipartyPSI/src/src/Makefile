@@ -111,46 +111,46 @@ depend:
 .PHONY : depend
 
 # Convenience name for target.
-src/CMakeFiles/mpsi.dir/rule:
-	cd /home/ubuntu/MultipartyPSI/src && $(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/mpsi.dir/rule
-.PHONY : src/CMakeFiles/mpsi.dir/rule
+src/CMakeFiles/semihonest.dir/rule:
+	cd /home/ubuntu/MultipartyPSI/src && $(MAKE) -f CMakeFiles/Makefile2 src/CMakeFiles/semihonest.dir/rule
+.PHONY : src/CMakeFiles/semihonest.dir/rule
 
 # Convenience name for target.
-mpsi: src/CMakeFiles/mpsi.dir/rule
+semihonest: src/CMakeFiles/semihonest.dir/rule
 
-.PHONY : mpsi
+.PHONY : semihonest
 
 # fast build rule for target.
-mpsi/fast:
-	cd /home/ubuntu/MultipartyPSI/src && $(MAKE) -f src/CMakeFiles/mpsi.dir/build.make src/CMakeFiles/mpsi.dir/build
-.PHONY : mpsi/fast
+semihonest/fast:
+	cd /home/ubuntu/MultipartyPSI/src && $(MAKE) -f src/CMakeFiles/semihonest.dir/build.make src/CMakeFiles/semihonest.dir/build
+.PHONY : semihonest/fast
 
-mpsi.o: mpsi.cpp.o
+semihonest.o: semihonest.cpp.o
 
-.PHONY : mpsi.o
+.PHONY : semihonest.o
 
 # target to build an object file
-mpsi.cpp.o:
-	cd /home/ubuntu/MultipartyPSI/src && $(MAKE) -f src/CMakeFiles/mpsi.dir/build.make src/CMakeFiles/mpsi.dir/mpsi.cpp.o
-.PHONY : mpsi.cpp.o
+semihonest.cpp.o:
+	cd /home/ubuntu/MultipartyPSI/src && $(MAKE) -f src/CMakeFiles/semihonest.dir/build.make src/CMakeFiles/semihonest.dir/semihonest.cpp.o
+.PHONY : semihonest.cpp.o
 
-mpsi.i: mpsi.cpp.i
+semihonest.i: semihonest.cpp.i
 
-.PHONY : mpsi.i
+.PHONY : semihonest.i
 
 # target to preprocess a source file
-mpsi.cpp.i:
-	cd /home/ubuntu/MultipartyPSI/src && $(MAKE) -f src/CMakeFiles/mpsi.dir/build.make src/CMakeFiles/mpsi.dir/mpsi.cpp.i
-.PHONY : mpsi.cpp.i
+semihonest.cpp.i:
+	cd /home/ubuntu/MultipartyPSI/src && $(MAKE) -f src/CMakeFiles/semihonest.dir/build.make src/CMakeFiles/semihonest.dir/semihonest.cpp.i
+.PHONY : semihonest.cpp.i
 
-mpsi.s: mpsi.cpp.s
+semihonest.s: semihonest.cpp.s
 
-.PHONY : mpsi.s
+.PHONY : semihonest.s
 
 # target to generate assembly for a file
-mpsi.cpp.s:
-	cd /home/ubuntu/MultipartyPSI/src && $(MAKE) -f src/CMakeFiles/mpsi.dir/build.make src/CMakeFiles/mpsi.dir/mpsi.cpp.s
-.PHONY : mpsi.cpp.s
+semihonest.cpp.s:
+	cd /home/ubuntu/MultipartyPSI/src && $(MAKE) -f src/CMakeFiles/semihonest.dir/build.make src/CMakeFiles/semihonest.dir/semihonest.cpp.s
+.PHONY : semihonest.cpp.s
 
 # Help Target
 help:
@@ -160,10 +160,10 @@ help:
 	@echo "... depend"
 	@echo "... rebuild_cache"
 	@echo "... edit_cache"
-	@echo "... mpsi"
-	@echo "... mpsi.o"
-	@echo "... mpsi.i"
-	@echo "... mpsi.s"
+	@echo "... semihonest"
+	@echo "... semihonest.o"
+	@echo "... semihonest.i"
+	@echo "... semihonest.s"
 .PHONY : help
 
 
