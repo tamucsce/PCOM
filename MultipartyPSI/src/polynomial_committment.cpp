@@ -39,7 +39,7 @@
 
 #include "utils/csv.hpp"
 
-#define G 16
+#define G 2
 int num_bits = 254;
 #define MIE_ATE_USE_GMP 1
 
@@ -163,11 +163,10 @@ ciphertext encrypt(const pubkey& key, const Ec1& g, mpz_class message) {
     gmp_randclass rand(gmp_randinit_default);
     rand.seed(time(NULL));
 
-    // mpz_class r = rand.get_z_bits(400) % mpr;
-    // mpz_class s = rand.get_z_bits(400) % mpr;
-    
-    mpz_class r(0);
-    mpz_class s(0);
+    mpz_class r = rand.get_z_bits(400) % mpr;
+    mpz_class s = rand.get_z_bits(400) % mpr;
+    //mpz_class r(0);
+    //mpz_class s(0);
     mpz_class rs = r + s;
 
     ciphertext cipher{
@@ -448,9 +447,7 @@ Ec1 com_d;
 //phase3 proof
 vector<Ec1> proof_coml;
 vector<Ec1> proof_comr;
-int proof_size = 0;
-int commitment_size = 0 ;
-int total_communication = 0;
+int proof_size;
 float comTi_time; 
 // Client / Server (Party P1) code
 //
@@ -2535,10 +2532,7 @@ Ec1* prover_set_broadcast_values_and_return_gy(int newsize,Ec1 g1,Ec1* a,  int d
     com = bbm_enc(a,b,d,v,w,newsize);
     clock_t t_1 = clock();
     Ec1* evaluations = new Ec1[num_eval];
-    auto t_eval = make_timer("Phase 1 evaluation");
     evaluations = compute_gf(a,deg_A,newsize,eval_points,num_eval,g1);  
-    t_eval.stop();
-
     float eval1_time = clock() - t_1;
 
     // clock_t t_2 = clock();
@@ -2564,11 +2558,14 @@ Ec1* prover_set_broadcast_values_and_return_gy(int newsize,Ec1 g1,Ec1* a,  int d
     //compute_com_Ti(num_eval_pt, newsize);    
     comTi_time = clock() - t_com_Ti;
 
+    auto t5 = make_timer("Multipoint evaluation");
+
     Ec1 d_2 = evaluations[0] * (mie::Vuint(r[0].get_str().c_str()));
     for (int i = 1; i < num_eval; ++i)
     {
         d_2 = d_2 + (evaluations[i] * (mie::Vuint(r[i].get_str().c_str())));
     }
+    t5.stop();
 
     Fp12 com_2 = compute_com_phase1(a,b,d_2,v,w,r,newsize,num_eval);
     com = com_2;
@@ -2578,6 +2575,8 @@ Ec1* prover_set_broadcast_values_and_return_gy(int newsize,Ec1 g1,Ec1* a,  int d
 }
 
 void Prover(Ec2 g2, Ec1 g1,int d,int deg_A, Ec1* A ,Ec2* v, Ec1* w, mpz_class* eval_points, mpz_class* b, int num_eval,Fp12 com,int round){
+    //printCipher2Poly(v,d);
+    //cout<<com<<endl;
 
     if(d>=2){
     printf("=============Prover iteration : %d==================\n",round);
@@ -2617,7 +2616,6 @@ void Prover(Ec2 g2, Ec1 g1,int d,int deg_A, Ec1* A ,Ec2* v, Ec1* w, mpz_class* e
             w_R[i] = w[i+d_prime];
         }
 
-
         //compute cl, cr
         Ec1 cl,cr;
 
@@ -2635,6 +2633,12 @@ void Prover(Ec2 g2, Ec1 g1,int d,int deg_A, Ec1* A ,Ec2* v, Ec1* w, mpz_class* e
         L = bbm_enc(A_R, b_L,cl,v_L,w_R,d_prime);
         R = bbm_enc(A_L, b_R,cr,v_R,w_L,d_prime);
 
+
+        // L = bbm_enc_A(A_R,v_L,d_prime);
+        // R = bbm_enc_A(A_L,v_R,d_prime);
+        // L = bbm_enc(A_L, b_R,cl,v_R,w_L,d_prime);
+        // R = bbm_enc(A_R, b_L,cr,v_L,w_R,d_prime);
+
         //store the proofs
         proof_L[round] = L;
         proof_R[round] = R;
@@ -2648,7 +2652,7 @@ void Prover(Ec2 g2, Ec1 g1,int d,int deg_A, Ec1* A ,Ec2* v, Ec1* w, mpz_class* e
 
 
         //proofsize
-        int proof_size_each = 2* sizeof(Fp12);
+        int proof_size_each = 2* sizeof(Ec1);
         proof_size += proof_size_each;
 
 
@@ -2680,6 +2684,8 @@ void Prover(Ec2 g2, Ec1 g1,int d,int deg_A, Ec1* A ,Ec2* v, Ec1* w, mpz_class* e
         folding_time += (double)(clock()-time)/CLOCKS_PER_SEC;
 
 
+
+
        
         //clean memory
         delete[] v_R;
@@ -2701,21 +2707,11 @@ void Prover(Ec2 g2, Ec1 g1,int d,int deg_A, Ec1* A ,Ec2* v, Ec1* w, mpz_class* e
         //create final proof
         final_proof_1 = A[0];
         final_proof_2 = b[0]%mod;
-
-
-      
-
-
-        //for plotting
-        proof_size += sizeof(final_proof_1);
-        proof_size += sizeof(final_proof_2);
-
-
+   
 
         return;
     }
 }
-//Verifier(g2,g1,newsize,v,w,eval_points,com,gy,num_eval_pt,0);
 
 void Verifier(Ec2 g2, Ec1 g1, int d, Ec2* v, Ec1* w, Fp12 com, int num_eval, int round){
     //cout<<com<<endl;
@@ -2791,13 +2787,13 @@ void Verifier(Ec2 g2, Ec1 g1, int d, Ec2* v, Ec1* w, Fp12 com, int num_eval, int
 
 
        Ec1 final_innerpro = vec1[0]*(mie::Vuint(vec2[0].get_str().c_str()));
+    
        Fp12 com2 = bbm_enc(vec1,vec2,final_innerpro,v,w,1);
 
-  
-
+       //cout<<com2<<endl;
        if (com == com2)
        {
-         cout<<"Verifier: PASS"<<endl;
+         cout<<"Verification Result: PASS"<<endl;
        }
        else{
          cout<<"Verifier: FAIL"<<endl;
@@ -2806,6 +2802,7 @@ void Verifier(Ec2 g2, Ec1 g1, int d, Ec2* v, Ec1* w, Fp12 com, int num_eval, int
       
     }
 }
+
 //Prover_phase2(g2,g1,newsize,deg_A,L_phase3,w,w_prime,R_phase3,num_eval_pt,0);
 
 void Prover_phase2(Ec2 g2, Ec1 g1,int d,int deg_A, mpz_class* A ,Ec1* v, Ec1* w, mpz_class* b, int num_eval,int round){
@@ -2869,7 +2866,7 @@ void Prover_phase2(Ec2 g2, Ec1 g1,int d,int deg_A, mpz_class* A ,Ec1* v, Ec1* w,
         proof_R_phase2[round] = R;
 
         //proofsize
-        int proof_size_each = 2* sizeof(Ec1)/3;
+        int proof_size_each = 2* sizeof(Ec1);
         proof_size += proof_size_each;
 
         //grab challenge from chals;
@@ -2925,8 +2922,6 @@ void Prover_phase2(Ec2 g2, Ec1 g1,int d,int deg_A, mpz_class* A ,Ec1* v, Ec1* w,
         //create final proof
         final_proof_1_phase2 = A[0];
         final_proof_2_phase2 = b[0];
-        proof_size+= sizeof(final_proof_1_phase2);
-        proof_size+= sizeof(final_proof_2_phase2);
 
         return;
     }
@@ -3033,7 +3028,7 @@ void Prover_Phase3(mpz_class &d,Ec1 com_d,mpz_class x,int m,int Li_size,int roun
         proof_comr[round] = com_r;
 
         //proofsize
-        int proof_size_each = 2* sizeof(Ec1)/3;
+        int proof_size_each = 2* sizeof(Ec1);
         proof_size += proof_size_each;
 
 
@@ -3140,7 +3135,7 @@ void run_server(std::chrono::seconds accept_time, const std::vector<mpz_class>& 
     /*  Notify clients to start */
     sock.broadcast("start"s);
 
-    //auto t = make_timer("P1 protocol");
+    auto t = make_timer("P1 protocol");
     auto t1 = make_timer("Key Generation");
     /*  Prepare random seed */
     mpz_class mpr = mpz_class((Param::r).toString());
@@ -3174,17 +3169,17 @@ void run_server(std::chrono::seconds accept_time, const std::vector<mpz_class>& 
             DEBUG << os.str();
         //std::cout << os.str();
 
-            if(flag) {
-              Pusum = u;
-              Pvsum = v;
-              Phsum = h;
-                  flag = false;
-            }
-            else {
-                  Pusum += u;
-                  Pvsum += v;
-                  Phsum += h;
-            }
+        if(flag) {
+          Pusum = u;
+          Pvsum = v;
+          Phsum = h;
+              flag = false;
+        }
+        else {
+              Pusum += u;
+              Pvsum += v;
+              Phsum += h;
+        }
         }
 
         std::stringstream os;
@@ -3194,91 +3189,46 @@ void run_server(std::chrono::seconds accept_time, const std::vector<mpz_class>& 
         DEBUG << os.str();
     //std::cout << os.str();
         sock.broadcast(Pusum, Pvsum, Phsum);
-        total_communication += sizeof(Ec1);
         pubkey key{ Pusum, Pvsum, Phsum };
     t1.stop();
-        //auto t2 = make_timer("Aggregate all polynomials");
+        auto t2 = make_timer("Aggregate all polynomials");
 
         // Combined polynomial
         std::optional<std::vector<ciphertext>> enc_poly_sum = std::nullopt;
-        std::optional<std::vector<ciphertext>> enc_poly_sum_backup = enc_poly_sum;
-
         std::tie(msgs, kickedout) = sock.collect(100s);
         if (kickedout) {
             WARNING << kickedout << " clients have been kicked out";
         }
-        auto t_agg = make_timer("Aggregate all polynomials");
+        
+        for (auto& msg : msgs) {
+            std::vector<ciphertext> enc_poly;
+            sock.archive().unpack(msg, enc_poly);
+            DEBUG << "Receiving ..." << std::endl;
 
-
-       
-        for (int j = 0; j < 1; ++j)
-        {
-            for (auto& msg : msgs) {
-                std::vector<ciphertext> enc_poly;
-                sock.archive().unpack(msg, enc_poly);
-                DEBUG << "Receiving ..." << std::endl;
-
-                if (enc_poly_sum) {
-
-                     for (auto i = 0; i < enc_poly.size(); i++) {
-                        enc_poly_sum.value()[i] = enc_poly_sum.value()[i] + enc_poly[i];
-                    }
-               
-                }
-                
-                else {
-                    enc_poly_sum = std::move(enc_poly);
+            if (enc_poly_sum) {
+                for (auto i = 0; i < enc_poly.size(); i++) {
+                    enc_poly_sum.value()[i] = enc_poly_sum.value()[i] + enc_poly[i];
                 }
             }
+            else {
+                enc_poly_sum = std::move(enc_poly);
+            }
         }
-        
-        t_agg.stop();
-
-        //t2.stop();
+    t2.stop();
         auto t3 = make_timer("Interactive Evaluate at lambda");
 
     // Evaluate on a random point lambda
     std::cout << "Lambda test" << std::endl;
+
     mpz_class lambda = rr.get_z_bits(400) % mpr;
     auto lambda_eval = homorphic_polyeval(key,g1,lambda,enc_poly_sum.value());
     //cout<<"lamda eval: "<<lambda_eval.get(2)<<endl;
-    // broadcast evaluation value to every party 
-
 
 //===========================================================================
 //================lamda eval using phase1 code =============================
 //===========================================================================
 
-    sock.broadcast(lambda.get_str());
-    
-    //==========receive other evals==========
-    auto [evals, kickedout2] = sock.collect(100s);
 
-    if (kickedout2) {
-        WARNING << kickedout2 << " clients have been kicked out";
-    }
-    std::vector<Ec1> evals_all;
-    //sock.archive().unpack(evals, evals_all);
-    //cout<<evals<<endl;
-
-    Ec1 eval_added = g1*ling;
-    for (auto& eval : evals) {
-        // std::vector<ciphertext> enc_poly;
-
-        Ec1 each_eval;
-        sock.archive().unpack(eval, each_eval);
-        cout<<each_eval<<endl;
-
-        eval_added = eval_added + each_eval;
-    }
-    // Ec1* poly_p0 = new Ec1[enc_poly->size()];
-    // for (int i = 0; i < enc_poly->size(); ++i)
-    // {
-    //     poly_p0[i] = enc_poly.value()[i][2];
-    // }
-    // Ec1 eval_p0 = innerEc1Mpz(poly_p0,t_lambda,enc_poly->size());
-
-    //========================
     int poly_size = enc_poly_sum->size();
     keygen_public(poly_size,g1, g2);
     mpz_class* t_lambda = new mpz_class[poly_size]; //all eval vectors
@@ -3293,39 +3243,14 @@ void run_server(std::chrono::seconds accept_time, const std::vector<mpz_class>& 
         poly[i] = enc_poly_sum.value()[i][2];
     }
     Ec1 d = innerEc1Mpz(poly,t_lambda,poly_size);
-    
-    // check if these 2 decrypt to 0
-    cout<<lambda_eval[0]<<endl;
-    cout<<lambda_eval[1]<<endl;
-    cout<<lambda_eval[2]<<endl;
-
-    cout<<eval_added<<endl;
-   
-    //exit(1);
-    //========evaluate at its own polynomial==========
-    // cout<<"hi"<<endl;
-
-    // Ec1* poly_P1 = new Ec1[poly_size];
-    // for (int i = 0; i < poly_size; ++i)
-    // {
-    //     cout<<"here"<<endl;
-    //     poly_P1[i] = enc_poly_sum_backup.value()[i][2];
-    // }
-    // cout<<"hi"<<endl;
-    // Ec1 eval_p1 = innerEc1Mpz(poly_P1,t_lambda,poly_size);
-    // cout<<"hi"<<endl;
-    // cout<<eval_p1<<endl;
-    // exit(1);
-
     Fp12 com_lamda = bbm_enc(poly,t_lambda,d,v,w,poly_size);
- 
+
     int rounds = log2(poly_size);//rounds = how many chals or proofs
     //generate challenges before hand
     chals = generate_phase1_random_challenge(rounds);  
     init_proof(rounds);//assign the correct size to each proof vector
 
     Prover(g2,g1,poly_size,0,poly,v,w,lamdas,t_lambda,1,com_lamda,0);
-    
     std::vector<Ec2> v_send(poly_size);
     for (int i = 0; i < poly_size; ++i)
     {
@@ -3342,14 +3267,12 @@ void run_server(std::chrono::seconds accept_time, const std::vector<mpz_class>& 
     sock.broadcast(final_proof_1, final_proof_2.get_str());
 
     vector<string>chals_lambda(rounds);
-    // cout<<h1<<endl;
-    // cout<<h2<<endl;
     for (int i = 0; i < rounds; ++i)
     {
         chals_lambda[i] = chals[i].get_str();
+
     }
     sock.broadcast(chals_lambda);
-
 //===========================================================================
 //===========================================================================
 
@@ -3388,7 +3311,8 @@ void run_server(std::chrono::seconds accept_time, const std::vector<mpz_class>& 
     //=================WENXUAN malicious=================================//
 
     std::cout << "Proof Generation" << std::endl;
-    
+    auto t4 = make_timer("Interactive Proof Generation");
+    auto t4a = make_timer("Proof Generation Phase 1");
     
 
 
@@ -3425,8 +3349,7 @@ void run_server(std::chrono::seconds accept_time, const std::vector<mpz_class>& 
          eval_points[i] = input[i];
          //cout<<"a[i]"<<a[i]<<endl;
      } 
-    //keygen_public(newsize,g1, g2);
-    cout<<newsize<<endl;
+    keygen_public(newsize,g1, g2);
     rounds = log2(newsize);//rounds = how many chals or proofs
     //generate challenges before hand
     chals = generate_phase1_random_challenge(rounds);  
@@ -3439,37 +3362,33 @@ void run_server(std::chrono::seconds accept_time, const std::vector<mpz_class>& 
 
     num_eval_pt = num_eval;
     cout<<"==============================Begin PHASE 1================================"<<endl;
-
-    auto t4 = make_timer("Interactive Proof Generation");
-    auto t4a = make_timer("Proof Generation Phase 1");
     clock_t t_prover = clock();
     Ec1* gy = prover_set_broadcast_values_and_return_gy(newsize,g1,A,deg_A,eval_points,num_eval_pt);//set com return gy
 
-    commitment_size += num_eval*sizeof(Ec1)/3;
-    commitment_size += num_eval*sizeof(com);
 
     Prover(g2, g1,newsize,deg_A, A,v,w,eval_points,b,num_eval_pt,com,0);
     cout<<"prover time: "<<(double)(clock()-t_prover)/CLOCKS_PER_SEC<<"s\n";
 
     final_proof_2 = final_proof_2%mod;
+
+    
     std::vector<Ec1> A_send(newsize);
     for (int i = 0; i < newsize; ++i)
     {
         A_send[i] = A[i];
     }
     t4a.stop();
-    //sock.broadcast(poly_size, v_send, w_send,h1,h2,cku);
 
     sock.broadcast(newsize, num_eval,
                    deg_A, A_send, rounds, com);
-    // vector<Ec1> com_Ti_send;
-    // com_Ti_send.resize(num_eval_pt);
-    // for (int i = 0; i < num_eval_pt; ++i)
-    // {
-    //     com_Ti_send[i] = com_Ti[i];
-    // }
+    vector<Ec1> com_Ti_send;
+    com_Ti_send.resize(num_eval_pt);
+    for (int i = 0; i < num_eval_pt; ++i)
+    {
+        com_Ti_send[i] = com_Ti[i];
+    }
 
-    // sock.broadcast(com_Ti_send);   
+    sock.broadcast(com_Ti_send);   
     sock.broadcast(proof_L, proof_R);
 
     final_proof_2 = final_proof_2%mod;
@@ -3483,10 +3402,9 @@ void run_server(std::chrono::seconds accept_time, const std::vector<mpz_class>& 
     {
         chals_str[i] = chals[i].get_str();
         //cout<<chals[i]<<endl;
-    total_communication+= rounds * sizeof(chals_str[i]);
-
     }
     auto t4d = make_timer("Proof Generation Phase 4");
+
     sock.broadcast(chals_str);
     t4d.stop();
 
@@ -3506,26 +3424,26 @@ void run_server(std::chrono::seconds accept_time, const std::vector<mpz_class>& 
     //prover commits all Xi;
     clock_t t_com_Xi = clock();
     compute_com_Xi_com_Yi_com_Zi_com_Fi(newsize,num_eval_pt);  
-    commitment_size+= 4* num_eval_pt * sizeof(Ec1)/3;
+
     //send com_Xi com_Yi com_Zi com_Fi
-    // vector<Ec1> com_Xi_send;
-    // vector<Ec1> com_Yi_send;
-    // vector<Ec1> com_Zi_send;
-    // vector<Ec1> com_Fi_send;
+    vector<Ec1> com_Xi_send;
+    vector<Ec1> com_Yi_send;
+    vector<Ec1> com_Zi_send;
+    vector<Ec1> com_Fi_send;
 
-    // com_Xi_send.resize(num_eval_pt);
-    // com_Yi_send.resize(num_eval_pt);
-    // com_Zi_send.resize(num_eval_pt);
-    // com_Fi_send.resize(num_eval_pt);
+    com_Xi_send.resize(num_eval_pt);
+    com_Yi_send.resize(num_eval_pt);
+    com_Zi_send.resize(num_eval_pt);
+    com_Fi_send.resize(num_eval_pt);
 
-    // for (int i = 0; i < num_eval_pt; ++i)
-    // {
-    //     com_Xi_send[i] = com_Xi[i];
-    //     com_Yi_send[i] = com_Yi[i];
-    //     com_Zi_send[i] = com_Zi[i];
-    //     com_Fi_send[i] = com_Fi[i];
+    for (int i = 0; i < num_eval_pt; ++i)
+    {
+        com_Xi_send[i] = com_Xi[i];
+        com_Yi_send[i] = com_Yi[i];
+        com_Zi_send[i] = com_Zi[i];
+        com_Fi_send[i] = com_Fi[i];
 
-    // }
+    }
     // vector<string> s_send;
     // vector<string> u_send;
 
@@ -3537,31 +3455,31 @@ void run_server(std::chrono::seconds accept_time, const std::vector<mpz_class>& 
     // {
     //     u_send[i] = u[i].get_str();
     // }
-    //sock.broadcast(com_Xi_send,com_Yi_send,com_Zi_send,com_Fi_send,chal_x.get_str());
+    sock.broadcast(com_Xi_send,com_Yi_send,com_Zi_send,com_Fi_send,chal_x.get_str());
     float comXi_time = clock() - t_com_Xi;
 
     compute_Sa_Xu_Tu_Sb_Yu_Sc_Zu_Sd_Fu( newsize,num_eval_pt);  
     //send sa,sb,sc,sd. this is public.
-    // vector<string> Sa_send;
-    // vector<string> Sb_send;
-    // vector<string> Sc_send;
-    // vector<string> Sd_send;
-    // Sa_send.resize(newsize);
-    // Sb_send.resize(newsize);
-    // Sc_send.resize(newsize);
-    // Sd_send.resize(newsize);
-    // for (int i = 0; i < newsize; ++i)
-    // {
-    //     Sa_send[i] = Sa[i].get_str();
-    //     Sb_send[i] = Sb[i].get_str();
-    //     Sc_send[i] = Sc[i].get_str();
-    //     Sd_send[i] = Sd[i].get_str();
+    vector<string> Sa_send;
+    vector<string> Sb_send;
+    vector<string> Sc_send;
+    vector<string> Sd_send;
+    Sa_send.resize(newsize);
+    Sb_send.resize(newsize);
+    Sc_send.resize(newsize);
+    Sd_send.resize(newsize);
+    for (int i = 0; i < newsize; ++i)
+    {
+        Sa_send[i] = Sa[i].get_str();
+        Sb_send[i] = Sb[i].get_str();
+        Sc_send[i] = Sc[i].get_str();
+        Sd_send[i] = Sd[i].get_str();
 
-    // }
-    // sock.broadcast(Sa_send,Sb_send,Sc_send,Sd_send);
+    }
+    sock.broadcast(Sa_send,Sb_send,Sc_send,Sd_send);
     //send commitments
     compute_l_r_commitments(cku,newsize,num_eval_pt,chal_x);
-    //sock.broadcast(com_l_X,com_r_X,com_l_Y,com_r_Y,com_l_Z,com_r_Z,com_l_F,com_r_F);
+    sock.broadcast(com_l_X,com_r_X,com_l_Y,com_r_Y,com_l_Z,com_r_Z,com_l_F,com_r_F);
 
     mpz_class* L_X = new mpz_class[newsize];
     mpz_class* R_X = new mpz_class[newsize];
@@ -3590,18 +3508,17 @@ void run_server(std::chrono::seconds accept_time, const std::vector<mpz_class>& 
 
 
 
-    auto t_verfier_phase2_additional = make_timer("verfier pahse 2 additional");
+
     //Ec1 com_u = cku*(mie::Vuint(LR.get_str().c_str()));
     mie::Vuint x(chal_x.get_str().c_str());
     mie::Vuint x_inv = invert(chal_x);
     mpz_class x_inv_mpz = invert_mpz_class(chal_x);
-    total_communication += sizeof(mpz_class);
+
     com_phase2_X = verifier_compute_com_phase2_X(newsize,num_eval_pt,x,x_inv,x_inv_mpz);
     com_phase2_Y = verifier_compute_com_phase2_Y(newsize,num_eval_pt,x,x_inv,x_inv_mpz);
     com_phase2_Z = verifier_compute_com_phase2_Z(newsize,num_eval_pt,x,x_inv,x_inv_mpz);
     com_phase2_F = verifier_compute_com_phase2_F(newsize,num_eval_pt,x,x_inv,x_inv_mpz);
 
-    t_verfier_phase2_additional.stop();
 
     float phase2_verifier_time;
     clock_t t_innerprod = clock();
@@ -3702,20 +3619,40 @@ cout<<"=====================F sent ============================="<<endl;
     //=================END WENXUAN malicious=================================//
     //=======================================================================//
 
+    std::cout << "Multipoint evaluation" << std::endl;
     auto t5 = make_timer("Multipoint evaluation");
     //wenxuan debug
 
     //clock_t test_muthu = clock();
     auto enc_eval = homorphic_polyeval(key,g1,input,enc_poly_sum.value());
-    
+    // cout<<"num_eval: "<<input.size()<<endl;
+    // cout<<"enc_poly size: "<<enc_poly_sum->size()<<endl;
+    // cout<<"muthu time: "<<(double)(clock()-test_muthu)/CLOCKS_PER_SEC<<"s\n";
+
+    // clock_t test_wen = clock();
+    // Ec1* eval = new Ec1[num_eval];
+    // mpz_class idx;
+    // for (int j = 0; j < num_eval; ++j)
+    // {
+    //     mpz_class t_mpz = eval_points[j];
+    //     Ec1 eval_ = A[0]*(mie::Vuint(exponetiate(t_mpz,zero).get_str().c_str()));
+    //     for (int i = 1; i < newsize; i++)
+    //     {
+    //         idx = mpz_class(i);
+    //         eval_ += A[i]*(mie::Vuint(exponetiate(t_mpz,idx).get_str().c_str()));
+    //     }
+    //     eval[j] = eval_;
+    // }
+    // cout<<"num_eval: "<<num_eval<<endl;
+    // cout<<"enc_poly size: "<<newsize<<endl;
+    // cout<<"wen time: "<<(double)(clock()-test_wen)/CLOCKS_PER_SEC<<"s\n";
+    //exit(1);
 
     t5.stop();
     std::cout << "Decryption" << std::endl;
     auto t6 = make_timer("Interactive Decryption");
 
-    auto reenc_eval = rerandomize(key,g1,enc_eval); 
-    total_communication +=  reenc_eval.size()* sizeof(Ec1);   
-
+    auto reenc_eval = rerandomize(key,g1,enc_eval);     
     sock.broadcast(reenc_eval);
     // Rerandomization 
         std::optional<std::vector<ciphertext>> reenc_sum = std::nullopt;
@@ -3739,7 +3676,7 @@ cout<<"=====================F sent ============================="<<endl;
             }
     }
     sock.broadcast(reenc_sum.value());
-    total_communication +=  reenc_sum->size()* sizeof(Ec1);   
+    t5.stop();
 
     std::optional<std::vector<Ec1>> dprime_sum = std::nullopt;
         std::tie(msgs, kickedout) = sock.collect(100s);
@@ -3762,7 +3699,6 @@ cout<<"=====================F sent ============================="<<endl;
             }
     }
     sock.broadcast(dprime_sum.value());
-    total_communication +=  reenc_sum->size()* sizeof(Ec1)/3;   
 
 
         std::optional<std::vector<Ec1>> eprime_sum = std::nullopt;
@@ -3794,14 +3730,11 @@ cout<<"=====================F sent ============================="<<endl;
         sock.broadcast(true);
 
         t6.stop();
-        //t.stop();
+        t.stop();
         show_timer();
         }
 
     INFO << "Done!";
-    total_communication = total_communication + proof_size + commitment_size;
-        cout<<"Communication Size: "<<total_communication<<endl;
-
 }
 
 // ------------------------------------------------------------
@@ -3863,7 +3796,6 @@ void run_client(const std::vector<mpz_class>& input, const std::string bind_addr
     // ============================================================
 
     sock.send(Pu, Pv, Ph);
-    total_communication += sizeof(Ec1);
     auto [sum_Pu, sum_Pv, sum_Ph] = sock.receive<Ec1, Ec1, Ec1>(100s);
 
     os << "Public key u = " << sum_Pu << std::endl
@@ -3894,6 +3826,27 @@ void run_client(const std::vector<mpz_class>& input, const std::string bind_addr
     coeffs = getCoeff(input.data(),input.size());
 
 
+    // ------------------------------------------------------------
+    /* Testing the interpolation 
+    // ------------------------------------------------------------
+    for (auto i=0; i < input.size()+1; i++) {
+      std::cout << "term [" << i << "] = " << coeffs[i] % mpr << std::endl;
+    }
+    mpz_class eval;
+    mpz_class powerx;
+    for(auto i=0; i < input.size(); i++) {
+       powerx = input[i];
+       for(auto j=0; j < input.size()+1; j++) {
+          if(j==0) eval = coeffs[0];
+          else {
+            eval = eval + coeffs[j]*powerx;
+        powerx *= input[i];
+      }
+       }
+       std::cout << "f(" << input[i] << ") = " << eval % mpr << std::endl;
+    }
+    // ------------------------------------------------------------
+    */
 
     for (auto i=0; i<input.size()+1; i++) {
         //enc_poly.emplace_back(encrypt(key, g1, coeffs[i]));
@@ -3907,44 +3860,26 @@ void run_client(const std::vector<mpz_class>& input, const std::string bind_addr
     mpz_class scalar = rr.get_z_bits(400) % mpr;
     for(auto& i: enc_poly) i*=scalar;
     sock.send(enc_poly);
-    total_communication += 3*enc_poly.size()*sizeof(Ec1)/3;
+
     t2.stop();
     std::cout << "Lambda test" << std::endl;
-    auto [lambda_str] = sock.receive<string>(100s);
-
+   
 //====================================================================================================
 //====================verfier check if lambda is computed correctly =============================
 //====================================================================================================
-    //evaluate lambda at its own poly
-    mpz_class lambda = mpz_class(lambda_str);
-    int poly_size = enc_poly.size();
-    Ec1* poly = new Ec1[poly_size];
-    for (int i = 0; i < poly_size; ++i)
-    {
-        poly[i] = enc_poly[i][2];
-    }
-    mpz_class* t_lambda = new mpz_class[poly_size]; //all eval vectors
-    for (int i = 0; i < poly_size; ++i)
-    {
-        t_lambda[i] = exponetiate(lambda,i);
-    }
-    
-    Ec1 eval = innerEc1Mpz(poly,t_lambda,poly_size);
-    // cout<<"hi"<<endl;
-    sock.send(eval);
-    cout<<eval<<endl;
-    //========================old things=====================================
-
     auto t3 = make_timer("Evaluate at lambda");
     //Evaluate at a random point lambda
     //sock.broadcast(poly_size, v_send, w_send, com_lamda);
     auto [poly_size_lamda,v_pk, w_pk, h1_pk,h2_pk,cku_pk, rounds_lambda, com_lamda] 
         = sock.receive<int,vector<Ec2>, vector<Ec1>, Ec2, Ec2, Ec1, int, Fp12>(6000s);
+        cout<<"receive 1"<<endl;
 
     auto [proof_L_lambda, proof_R_lambda] = sock.receive<std::vector<Fp12>, std::vector<Fp12>>(100s);
+    cout<<"receive 2"<<endl;
 
     auto [final_proof_1_lambda, final_proof_2_lambda] = sock.receive<Ec1, string>(100s);
 
+    cout<<"receive3"<<endl;
 
     final_proof_1 = final_proof_1_lambda;
     final_proof_2 = mpz_class(final_proof_2_lambda);
@@ -3955,23 +3890,24 @@ void run_client(const std::vector<mpz_class>& input, const std::string bind_addr
     
     //receive chals
     auto [chals_lamda] = sock.receive<vector<string>>(100s);
+    cout<<"receive 4"<<endl;
 
     chals.resize(rounds_lambda);
     for (int i = 0; i < rounds_lambda; ++i)
     {
         chals[i] = mpz_class(chals_lamda[i]);
-        //cout<<chals[i] <<endl;
+        cout<<chals[i] <<endl;
 
     }
-    h1 = h1_pk;
-    h2 = h2_pk;
-    cku = cku_pk;
-    // cout<<h1<<endl;
-    // cout<<h2<<endl;
     Verifier(g2,g1,poly_size_lamda,v_pk.data(),w_pk.data(),com_lamda,1,0);
+
 //====================================================================================================
 //====================================================================================================
-  
+    // auto [lambda_str] = sock.receive<std::string>(6000s);
+    // mpz_class lambda(lambda_str);
+    // auto lambda_eval = homorphic_polyeval(key,g1,lambda,enc_poly);  
+
+    // sock.send(lambda_eval);
 
     t3.stop();
 
@@ -3983,6 +3919,7 @@ void run_client(const std::vector<mpz_class>& input, const std::string bind_addr
     cout<<"==============================Begin PHASE 1================================"<<endl;
 
 
+    std::cout << "Waiting to receive proof" << std::endl;
     auto t4 = make_timer("Verifier time");
 
 
@@ -3991,7 +3928,7 @@ void run_client(const std::vector<mpz_class>& input, const std::string bind_addr
                      int, std::vector<Ec1>, int, Fp12>(6000s);
 
 
-    //auto[com_Ti_recv] = sock.receive< vector<Ec1> >(5000s);
+    auto[com_Ti_recv] = sock.receive< vector<Ec1> >(5000s);
     init_proof(rounds);//assign the correct size to each proof vector
 
     h1 = h1_pk;
@@ -4027,67 +3964,67 @@ void run_client(const std::vector<mpz_class>& input, const std::string bind_addr
     DEBUG<<"gy:"<<endl;
     
     std::cout << "Verifying proof" << std::endl;
-    auto t_verfier_phase1= make_timer("Verifier phase1");
+    auto t5 = make_timer("Verify proofs phase1");
     // Verifier(g2, g1, newsize, v_pk.data(),
     //          eval_points.data(), com_v, gy_verfier.data(), num_eval, 0);
     Verifier(g2,g1,newsize,v_pk.data(),w_pk.data(),com_v,num_eval_pt,0);
 
-    t_verfier_phase1.stop();
+    t5.stop();
     cout<<"==============================END PHASE 1================================"<<endl;
     cout<<"==============================Begin PHASE 2================================"<<endl;
 
     //revceive the commitments
-    // auto [com_Xi_recv,  com_Yi_recv, com_Zi_recv, com_Fi_recv, x_chal_str] =
-    //     sock.receive<vector<Ec1>, vector<Ec1>,vector<Ec1>,vector<Ec1>,string>(6000s);
-    //mpz_class chal_x = mpz_class(x_chal_str);
-    // com_Xi = new Ec1[num_eval_pt];
-    // com_Yi = new Ec1[num_eval_pt];
-    // com_Zi = new Ec1[num_eval_pt];
-    // com_Fi = new Ec1[num_eval_pt];
+    auto [com_Xi_recv,  com_Yi_recv, com_Zi_recv, com_Fi_recv, x_chal_str] =
+        sock.receive<vector<Ec1>, vector<Ec1>,vector<Ec1>,vector<Ec1>,string>(6000s);
+    mpz_class chal_x = mpz_class(x_chal_str);
+    com_Xi = new Ec1[num_eval_pt];
+    com_Yi = new Ec1[num_eval_pt];
+    com_Zi = new Ec1[num_eval_pt];
+    com_Fi = new Ec1[num_eval_pt];
 
-    // for (int i = 0; i < num_eval_pt; ++i)
-    // {
-    //     com_Xi[i] = com_Xi_recv[i];
-    //     com_Yi[i] = com_Yi_recv[i];
-    //     com_Zi[i] = com_Zi_recv[i];
-    //     com_Fi[i] = com_Fi_recv[i];
-    // }
+    for (int i = 0; i < num_eval_pt; ++i)
+    {
+        com_Xi[i] = com_Xi_recv[i];
+        com_Yi[i] = com_Yi_recv[i];
+        com_Zi[i] = com_Zi_recv[i];
+        com_Fi[i] = com_Fi_recv[i];
+    }
 //  sock.broadcast(Sa_send,Sb_send,Sc_send,Sd_send);
-    // auto [Sa_recv,  Sb_recv, Sc_recv, Sd_recv] =
-    //     sock.receive<vector<string>, vector<string>,vector<string>,vector<string>>(6000s);
+    auto [Sa_recv,  Sb_recv, Sc_recv, Sd_recv] =
+        sock.receive<vector<string>, vector<string>,vector<string>,vector<string>>(6000s);
 
-    // Sa = new mpz_class[newsize];
-    // Sb = new mpz_class[newsize];
-    // Sc = new mpz_class[newsize];
-    // Sd = new mpz_class[newsize];
-    // for (int i = 0; i < newsize; ++i)
-    // {
-    //     Sa[i] = mpz_class(Sa_recv[i]);
-    //     Sb[i] = mpz_class(Sb_recv[i]);
-    //     Sc[i] = mpz_class(Sc_recv[i]);
-    //     Sd[i] = mpz_class(Sd_recv[i]);
+    Sa = new mpz_class[newsize];
+    Sb = new mpz_class[newsize];
+    Sc = new mpz_class[newsize];
+    Sd = new mpz_class[newsize];
+    for (int i = 0; i < newsize; ++i)
+    {
+        Sa[i] = mpz_class(Sa_recv[i]);
+        Sb[i] = mpz_class(Sb_recv[i]);
+        Sc[i] = mpz_class(Sc_recv[i]);
+        Sd[i] = mpz_class(Sd_recv[i]);
 
-    // }
+    }
     //sock.broadcast(com_l_X,com_r_X,com_l_Y,com_r_Y,com_l_Z,com_r_Z,com_l_F,com_r_F);
-    // auto [com_l_X_recv, com_r_X_recv, com_l_Y_recv, com_r_Y_recv, com_l_Z_recv, com_r_Z_recv, com_l_F_recv, com_r_F_recv] =
-    //     sock.receive<Ec1,Ec1,Ec1,Ec1,Ec1,Ec1,Ec1,Ec1>(6000s);
+    auto [com_l_X_recv, com_r_X_recv, com_l_Y_recv, com_r_Y_recv, com_l_Z_recv, com_r_Z_recv, com_l_F_recv, com_r_F_recv] =
+        sock.receive<Ec1,Ec1,Ec1,Ec1,Ec1,Ec1,Ec1,Ec1>(6000s);
 
-    // com_l_X = com_l_X_recv;
-    // com_r_X = com_r_X_recv;
-    // com_l_Y = com_l_Y_recv;
-    // com_r_Y = com_r_Y_recv;
-    // com_l_Z = com_l_Z_recv;
-    // com_r_Z = com_r_Z_recv;
-    // com_l_F = com_l_F_recv;
-    // com_r_F = com_r_F_recv;
+    com_l_X = com_l_X_recv;
+    com_r_X = com_r_X_recv;
+    com_l_Y = com_l_Y_recv;
+    com_r_Y = com_r_Y_recv;
+    com_l_Z = com_l_Z_recv;
+    com_r_Z = com_r_Z_recv;
+    com_l_F = com_l_F_recv;
+    com_r_F = com_r_F_recv;
 
     //Ec1 com_u = cku*(mie::Vuint(LR.get_str().c_str()));
-    // mie::Vuint x(chal_x.get_str().c_str());
-    // mie::Vuint x_inv = invert(chal_x);
-    // mpz_class x_inv_mpz = invert_mpz_class(chal_x);
+    mie::Vuint x(chal_x.get_str().c_str());
+    mie::Vuint x_inv = invert(chal_x);
+    mpz_class x_inv_mpz = invert_mpz_class(chal_x);
 
-    // com_phase2_X = verifier_compute_com_phase2_X(newsize,num_eval_pt,x,x_inv,x_inv_mpz);
-    // com_phase2_Y = verifier_compute_com_phase2_Y(newsize,num_eval_pt,x,x_inv,x_inv_mpz);
+    com_phase2_X = verifier_compute_com_phase2_X(newsize,num_eval_pt,x,x_inv,x_inv_mpz);
+    com_phase2_Y = verifier_compute_com_phase2_Y(newsize,num_eval_pt,x,x_inv,x_inv_mpz);
     // com_phase2_Z = verifier_compute_com_phase2_Z(newsize,num_eval_pt,x,x_inv,x_inv_mpz);
     // com_phase2_F = verifier_compute_com_phase2_F(newsize,num_eval_pt,x,x_inv,x_inv_mpz);
 
@@ -4112,9 +4049,8 @@ void run_client(const std::vector<mpz_class>& input, const std::string bind_addr
     proof_R_phase2 = proof_R_phase2_recv_X;
     final_proof_1_phase2 = mpz_class(final_proof_1_phase2_str_X);
     final_proof_2_phase2 = mpz_class(final_proof_2_phase2_str_X);
-    auto t6 = make_timer("Verifier phase2 x");
+
     Verifier_phase2(g2,g1,newsize,v_2,w_pk.data(),com_phase2_X,num_eval_pt,0);
-    t6.stop();
     auto [proof_L_phase2_recv_Y,  proof_R_phase2_recv_Y, final_proof_1_phase2_str_Y, final_proof_2_phase2_str_Y] =
         sock.receive<std::vector<Ec1>, std::vector<Ec1>,string,string>(6000s);
 
@@ -4122,9 +4058,8 @@ void run_client(const std::vector<mpz_class>& input, const std::string bind_addr
     proof_R_phase2 = proof_R_phase2_recv_Y;
     final_proof_1_phase2 = mpz_class(final_proof_1_phase2_str_Y);
     final_proof_2_phase2 = mpz_class(final_proof_2_phase2_str_Y);
-    auto t7 = make_timer("Verifier phase2 y");
+
     Verifier_phase2(g2,g1,newsize,v_2,w_pk.data(),com_phase2_Y,num_eval_pt,0);
-     t7.stop();
      auto [proof_L_phase2_recv_Z,  proof_R_phase2_recv_Z, final_proof_1_phase2_str_Z, final_proof_2_phase2_str_Z] =
         sock.receive<std::vector<Ec1>, std::vector<Ec1>,string,string>(6000s);
 
@@ -4132,9 +4067,8 @@ void run_client(const std::vector<mpz_class>& input, const std::string bind_addr
     proof_R_phase2 = proof_R_phase2_recv_Z;
     final_proof_1_phase2 = mpz_class(final_proof_1_phase2_str_Z);
     final_proof_2_phase2 = mpz_class(final_proof_2_phase2_str_Z);
-    auto t8 = make_timer("Verifier phase2 z");
+
     Verifier_phase2(g2,g1,newsize,v_2,w_pk.data(),com_phase2_Z,num_eval_pt,0);
-    t8.stop();
     auto [proof_L_phase2_recv_F,  proof_R_phase2_recv_F, final_proof_1_phase2_str_F, final_proof_2_phase2_str_F] =
         sock.receive<std::vector<Ec1>, std::vector<Ec1>,string,string>(6000s);
 
@@ -4142,16 +4076,14 @@ void run_client(const std::vector<mpz_class>& input, const std::string bind_addr
     proof_R_phase2 = proof_R_phase2_recv_F;
     final_proof_1_phase2 = mpz_class(final_proof_1_phase2_str_F);
     final_proof_2_phase2 = mpz_class(final_proof_2_phase2_str_F);
-    auto t9 = make_timer("Verifier phase2 F");
+
     Verifier_phase2(g2,g1,newsize,v_2,w_pk.data(),com_phase2_F,num_eval_pt,0);
-    t9.stop();
     cout<<"==============================End PHASE 2================================"<<endl;
     cout<<"==============================Begin PHASE 3 (quadratic constraint)================================"<<endl;
 
     auto [com_Li_rec,  com_Ri_rec, w_prime_rec,cku_rec, x_phase3_str] =
         sock.receive<std::vector<Ec1>, std::vector<Ec1>, std::vector<Ec1>,Ec1,string>(6000s);
     x_phase3 = mpz_class(x_phase3_str);
-    auto t11 = make_timer("Verifier phase 3");    
     com_Li = new Ec1[2*newsize];
     com_Ri = new Ec1[2*newsize];
     for (int i = 0; i < 2*newsize; ++i)
@@ -4181,7 +4113,6 @@ void run_client(const std::vector<mpz_class>& input, const std::string bind_addr
     final_proof_2_phase2 = mpz_class(final_proof_2_phase2_str_);
 
     Verifier_phase2(g2,g1,newsize,w_pk.data(),w_prime_rec.data(),com_test,num_eval,0);
-    t11.stop();
     t4.stop();
 
     cout<<"==============================END PHASE 3================================"<<endl;
@@ -4197,10 +4128,9 @@ void run_client(const std::vector<mpz_class>& input, const std::string bind_addr
     auto [enc_eval] = sock.receive<std::vector<ciphertext>>(6000s);
     tc1.stop();
     std::cout << "Begin decryption" << std::endl;
-    auto t10 = make_timer("Interactive Decryption");
+    auto t6 = make_timer("Interactive Decryption");
     std::vector<ciphertext> reenc = rerandomize(key,g1,enc_eval);
     sock.send(reenc);
-    total_communication += reenc.size() * sizeof(Ec1);
     auto [reenc_eval] = sock.receive<std::vector<ciphertext>>(100s);
 
     
@@ -4211,23 +4141,19 @@ void run_client(const std::vector<mpz_class>& input, const std::string bind_addr
       dprime.emplace_back(reenc_eval[i][2] * mpzx);
     }
     sock.send(dprime);
-    total_communication += dprime.size() * sizeof(Ec1)/3;
     auto [d] = sock.receive<std::vector<Ec1>>(100s);
     for (auto i = 0;i < d.size(); i++)
     {
       eprime.emplace_back(d[i] * mpzy - reenc_eval[i][0] * mpzy - reenc_eval[i][1] * mpzx);
     }
     sock.send(eprime);
-    total_communication += eprime.size() * sizeof(Ec1)/3;
-
     auto [hresult] = sock.receive<bool>(100s);
 
-    t10.stop();
+    t6.stop();
     t.stop();
     show_timer();
 
-    total_communication = total_communication + proof_size + commitment_size;
-    cout<<"Communication Size: "<<total_communication<<endl;
+
     auto [up, down] = sock.communication_cost(storage_unit::Byte);
 
     std::cout << "Uploaded: " << up << " Bytes, " << std::endl

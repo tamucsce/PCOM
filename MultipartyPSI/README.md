@@ -1,46 +1,46 @@
-Installation
+# MultipartyPSI
 
-GMP:
+## Building the Examples
 
-
-Install gmp-6.2.1, download the official zip and:
-
-  cd gmp
-
-  ./configure
-
-  make
-
-  make check
-
-  make install
+In order to build the library and examples, you'll need `Boost >= 1.74` and a C++20 compiler.
 
 
-Boost:
+``` bash
+mkdir build
+cd build/
+cmake -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_BUILD_TYPE=Release ../examples
+make
+```
 
-Install boost_1_76_0
- 
-
-Build Instruction
-
-
-
-
-
-To run the PSI protocal between 2 parties:
-
-open 2 terminals
-
-both:
+The `CMAKE_CXX_COMPILER` flag is optional if your system compiler support `-std=c++20`.
 
 
- cd /MultipartyPSI/build 
-compile:
+## MultipartyPSI
 
- make
-run:
+Here everything the current model can do:
+
+1. malicious part of MultipartyPSI (multipoints Eval)
+2. polynomial multiplication, division
+3. pairing
+4. roots -> poly coeffs (interpolation)
 
 
- terminal 1: ./src/mpsi -s -f file1
 
- terminal 2: ./src/mpsi -c -f file2
+in progress (Wenxuan & Yupeng):
+
+1. Use REAL encryption instead of commitment 
+2. Add Fiat-Shamir 
+3. more optimizing
+
+
+
+
+Usage:
+
+$ cd src
+
+$ make
+
+$ ./mpsi \<log degree of polynomial\>
+
+
